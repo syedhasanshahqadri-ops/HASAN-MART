@@ -1,0 +1,51 @@
+const $=s=>document.querySelector(s),app=$("#app"),S=STORE,EXT=["jpg","png","webp"];
+const money=n=>S.currency+" "+n.toLocaleString("en-US");
+const V=[["Classic",1],["Premium",1.4],["Select",1.15],["Everyday",1.25],["Deluxe",1.6]],P=[];
+CATS.forEach(c=>{let i=0;V.forEach(([v,m])=>c.b.forEach(([n,p])=>{i++;P.push({id:c.id+"-"+i,cat:c.id,n:i,name:v+" "+n,price:Math.round(p*m/10)*10})}))});
+const cat=id=>CATS.find(c=>c.id==id),prod=id=>P.find(p=>p.id==id);
+let cart=JSON.parse(localStorage.getItem("hb_cart")||"{}"),db=null,sort="",last=null;
+if(window.FIREBASE_CONFIG&&window.firebase){firebase.initializeApp(FIREBASE_CONFIG);db=firebase.firestore()}
+const total=()=>Object.entries(cart).reduce((a,[id,q])=>a+prod(id).price*q,0);
+const save=()=>{localStorage.setItem("hb_cart",JSON.stringify(cart));$("#cc").textContent=Object.values(cart).reduce((a,b)=>a+b,0)};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const ph=c=>c.id=="watches"?'<div class="ph"><i class="clock"></i></div>':`<div class="ph a${CATS.indexOf(c)%4}"><span>${c.icon}</span></div>`;
+function fail(im){const t=+im.dataset.t||0;if(t<2){im.dataset.t=t+1;im.src=im.src.replace(/\.\w+$/,"."+EXT[t+1])}else im.parentNode.innerHTML=ph(cat(im.dataset.c))}
+const card=p=>`<article class="card"><div class="media"><img src="images/${p.cat}/S${p.n}.jpg" data-c="${p.cat}" loading="lazy" alt="" onerror="fail(this)"></div><h3>${p.name}</h3><div class="row"><b>${money(p.price)}</b><button class="btn sm" data-add="${p.id}">Add to cart</button></div></article>`;
+const grid=l=>l.length?`<div class="grid">${l.map(card).join("")}</div>`:"<p>No products match your search.</p>";
+const sorter=()=>`<select id="srt" aria-label="Sort products"><option value="">Featured order</option><option value="lo"${sort=="lo"?" selected":""}>Price: low to high</option><option value="hi"${sort=="hi"?" selected":""}>Price: high to low</option></select>`;
+const sortL=l=>sort=="lo"?[...l].sort((a,b)=>a.price-b.price):sort=="hi"?[...l].sort((a,b)=>b.price-a.price):l;
+const views={
+home(){return `<section class="hero"><div><h1>${S.name}</h1><p>${S.tag}. Ten departments, 500 products, and your choice of cash on delivery, Easypaisa or JazzCash.</p><a class="btn" href="#/c/fashion">Start shopping</a></div><div class="stage" id="stage"><div class="st s1">${ph(CATS[0])}</div><div class="st s2">${ph(CATS[1])}</div><div class="st s3">${ph(CATS[9])}</div></div></section><h2>Shop by department</h2><div class="tiles">${CATS.map(c=>`<a class="tile" href="#/c/${c.id}"><span>${c.icon}</span>${c.name}</a>`).join("")}</div><h2>Featured picks</h2>${grid(P.filter(p=>p.n<3))}`},
+c(id){const c=cat(id);if(!c)return views.home();return `<div class="bar"><h2>${c.icon} ${c.name} <small>${P.filter(p=>p.cat==id).length} items</small></h2>${sorter()}</div>${grid(sortL(P.filter(p=>p.cat==id)))}`},
+s(q=""){const k=q.toLowerCase(),l=P.filter(p=>(p.name+" "+cat(p.cat).name).toLowerCase().includes(k));return `<div class="bar"><h2>Results for “${esc(q)}” <small>${l.length} items</small></h2>${sorter()}</div>${grid(sortL(l))}`},
+cart(){const ids=Object.keys(cart);if(!ids.length)return `<h2>Your cart is empty</h2><p>Pick a department and add something you like.</p><a class="btn" href="#/">Continue shopping</a>`;
+return `<h2>Your cart</h2><div class="cartl">${ids.map(id=>{const p=prod(id);return `<div class="line"><div class="thumb">${cat(p.cat).icon}</div><div><b>${p.name}</b><br><small>${money(p.price)} each</small></div><div class="qty"><button data-dec="${id}" aria-label="Fewer">−</button><span>${cart[id]}</span><button data-inc="${id}" aria-label="More">+</button></div><b>${money(p.price*cart[id])}</b><button class="x" data-del="${id}" aria-label="Remove item">✕</button></div>`}).join("")}</div><div class="sum"><div><span>Subtotal</span><b>${money(total())}</b></div></div><a class="btn" href="#/checkout">Go to checkout</a>`},
+checkout(){if(!Object.keys(cart).length)return views.cart();
+return `<h2>Checkout</h2><form id="ck"><div class="fields"><label>Full name<input name="name" required autocomplete="name"></label><label>Email<input name="email" type="email" required autocomplete="email"></label><label>Mobile number<input name="mobile" required pattern="0\\d{3}-?\\d{7}" placeholder="0300-1234567" autocomplete="tel"></label><label>City<input name="city" required></label><label class="w">Delivery address<textarea name="address" required rows="2"></textarea></label><label>Postal code (optional)<input name="postal"></label><label>Order notes (optional)<input name="notes"></label></div><h3>Payment method</h3><div class="pays">${[["cod","Cash on delivery","+ "+money(S.codFee)+" handling fee"],["easypaisa","Easypaisa","Pay by QR code or number"],["jazzcash","JazzCash","Pay by QR code or number"]].map((x,i)=>`<label class="pay"><input type="radio" name="pay" value="${x[0]}"${i?"":" checked"}><b>${x[1]}</b><small>${x[2]}</small></label>`).join("")}</div><div id="wp"></div><div class="sum" id="tot"></div><button class="btn">Place order</button><p id="err" class="err" role="alert"></p></form>`},
+done(){const o=last;if(!o)return views.home();const t=encodeURIComponent(`Hello ${S.name}, I placed order ${o.id} (${money(o.total)}).`);
+return `<div class="ok"><h2>Order ${o.id} received</h2><p>Thank you, ${esc(o.customer.name)}. Your total is <b>${money(o.total)}</b>${o.payment=="cod"?" (cash on delivery)":""}. We will contact you on ${esc(o.customer.mobile)} to confirm.</p>${db?"":"<p class='err'>Demo mode: Firebase is not connected yet, so staff cannot see this order. See README.txt.</p>"}<a class="btn" href="https://wa.me/${S.wa}?text=${t}">Confirm on WhatsApp</a> <a class="btn alt" href="#/">Keep shopping</a></div>`},
+contact(){return `<h2>Contact us</h2><div class="tiles c2"><a class="tile" href="mailto:${S.email}"><span>✉️</span>${S.email}</a><a class="tile" href="tel:${S.phone}"><span>📞</span>${S.phone}</a><a class="tile" href="https://wa.me/${S.wa}"><span>💬</span>WhatsApp ${S.phone}</a><div class="tile"><span>💳</span>Easypaisa ${S.easypaisa}<br>JazzCash ${S.jazzcash}</div></div>`}};
+function bindCk(){const f=$("#ck");if(!f)return;
+const up=()=>{const m=f.pay.value,fee=m=="cod"?S.codFee:0;$("#tot").innerHTML=`<div><span>Subtotal</span><b>${money(total())}</b></div>${fee?`<div><span>Cash on delivery fee</span><b>${money(fee)}</b></div>`:""}<div class="gt"><span>Total</span><b>${money(total()+fee)}</b></div>`;
+$("#wp").innerHTML=m=="cod"?"":`<div class="wallet"><img src="images/payment/${m}-qr.png" alt="${m} QR code" onerror="this.remove()"><div><p>Send <b>${money(total())}</b> to <b>${S[m]}</b>, then enter the transaction ID below.</p><label>Transaction ID<input name="trx" required></label></div></div>`};
+f.addEventListener("change",e=>e.target.name=="pay"&&up());up();f.onsubmit=place}
+async function place(e){e.preventDefault();const f=e.target,d=Object.fromEntries(new FormData(f)),fee=d.pay=="cod"?S.codFee:0,sub=total(),b=f.querySelector("button.btn");
+const o={id:"HB"+Date.now().toString(36).toUpperCase(),customer:{name:d.name,email:d.email,mobile:d.mobile,city:d.city,address:d.address,postal:d.postal||"",notes:d.notes||""},items:Object.entries(cart).map(([id,q])=>({id,name:prod(id).name,qty:q,price:prod(id).price})),subtotal:sub,fee,total:sub+fee,payment:d.pay,trx:d.trx||"",status:"Pending"};
+b.disabled=true;try{if(db)await db.collection("orders").doc(o.id).set({...o,createdAt:firebase.firestore.FieldValue.serverTimestamp()});else{const l=JSON.parse(localStorage.getItem("hb_orders")||"[]");l.push(o);localStorage.setItem("hb_orders",JSON.stringify(l))}
+cart={};save();last=o;location.hash="#/done"}catch(x){b.disabled=false;$("#err").textContent="We could not place your order ("+x.message+"). Try again or message us on WhatsApp."}}
+function tilt(){const s=$("#stage");if(!s||matchMedia("(prefers-reduced-motion:reduce)").matches)return;
+s.onmousemove=e=>{const r=s.getBoundingClientRect();s.style.setProperty("--ry",((e.clientX-r.left)/r.width-.5)*18+"deg");s.style.setProperty("--rx",-((e.clientY-r.top)/r.height-.5)*14+"deg")};
+s.onmouseleave=()=>{s.style.setProperty("--ry","0deg");s.style.setProperty("--rx","0deg")}}
+function route(){const [,r="",a=""]=(location.hash||"#/").split("/").map(decodeURIComponent),R=r||"home";
+app.innerHTML=(views[R]||views.home)(a);scrollTo(0,0);tilt();bindCk();document.querySelectorAll("#cn a").forEach(x=>x.classList.toggle("on",R=="c"&&x.hash=="#/c/"+a))}
+function toast(t){const e=$("#toast");e.textContent=t;e.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove("on"),1600)}
+document.addEventListener("click",e=>{const t=e.target.closest("button");if(!t)return;const D=t.dataset;
+if(D.add){cart[D.add]=(cart[D.add]||0)+1;save();toast(prod(D.add).name+" added to cart")}
+else if(D.inc||D.dec||D.del){const id=D.inc||D.dec||D.del;if(D.inc)cart[id]++;if(D.dec&&--cart[id]<1)delete cart[id];if(D.del)delete cart[id];save();route()}
+else if(t.id=="th"){const n=document.documentElement.dataset.theme=="dark"?"light":"dark";document.documentElement.dataset.theme=n;localStorage.setItem("hb_theme",n)}});
+document.addEventListener("change",e=>{if(e.target.id=="srt"){sort=e.target.value;route()}});
+$("#sf").onsubmit=e=>{e.preventDefault();const q=$("#q").value.trim();if(q)location.hash="#/s/"+encodeURIComponent(q)};
+$("#lg").textContent=S.name;document.title=S.name+" | Online Store";
+$("#cn").innerHTML=CATS.map(c=>`<a href="#/c/${c.id}">${c.icon} ${c.name}</a>`).join("");
+$("#ft").innerHTML=`<div class="fg"><div><h3>${S.name}</h3><p>${S.tag}. Order online and pay by cash on delivery, Easypaisa or JazzCash.</p></div><div><h3>Departments</h3>${CATS.slice(0,5).map(c=>`<a href="#/c/${c.id}">${c.name}</a>`).join("")}</div><div><h3>More departments</h3>${CATS.slice(5).map(c=>`<a href="#/c/${c.id}">${c.name}</a>`).join("")}</div><div><h3>Contact</h3><a href="mailto:${S.email}">${S.email}</a><a href="tel:${S.phone}">${S.phone}</a><a href="https://wa.me/${S.wa}">WhatsApp us</a><p>Easypaisa ${S.easypaisa}<br>JazzCash ${S.jazzcash}</p></div></div><p class="cp">© ${new Date().getFullYear()} ${S.name}. All rights reserved.</p>`;
+addEventListener("hashchange",route);save();route();
