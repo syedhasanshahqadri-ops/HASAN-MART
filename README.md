@@ -1,4 +1,4 @@
-# Hasan Bazaar - Store Website
+# Hasan Mart - Store Website
 
 The customer-facing online store. It uses external HTML, CSS and JavaScript files, and all site text is in English.
 
