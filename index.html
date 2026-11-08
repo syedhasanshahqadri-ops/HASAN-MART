@@ -1,8 +1,47 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hasan Mart</title>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Hasan Mart</title>
+<meta name="theme-color" content="#0A0F14">
 <script>document.documentElement.dataset.theme=localStorage.getItem("hb_theme")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light")</script>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css"></head><body>
-<header class="top"><a class="logo" href="#/" id="lg"></a><form id="sf"><input id="q" placeholder="Search products" aria-label="Search products"></form><nav><a href="#/contact">Contact</a><button id="th" aria-label="Switch light or dark theme">◐</button><a class="btn sm" href="#/cart">Cart (<span id="cc">0</span>)</a></nav></header>
-<nav id="cn" class="cats" aria-label="Departments"></nav><main id="app"></main><footer id="ft"></footer><div id="toast" role="status"></div>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="js/firebase-config.js"></script><script src="js/data.js"></script><script src="js/app.js"></script></body></html>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="strip" id="strip"></div>
+
+<header class="top">
+  <div class="inner">
+    <a class="logo" href="#/" id="lg"></a>
+    <form id="sf" role="search">
+      <button aria-label="Search"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 19a8 8 0 100-16 8 8 0 000 16zM21 21l-4.3-4.3"/></svg></button>
+      <input id="q" type="search" placeholder="Search products" aria-label="Search products" autocomplete="off">
+    </form>
+    <div class="hn">
+      <a class="hl" href="#/contact">Contact</a>
+      <button id="th" class="rb" aria-label="Switch light or dark theme"></button>
+      <a class="cartb" href="#/cart" aria-label="Open cart">
+        <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h2l2.7 12.4a2 2 0 002 1.6h7.7a2 2 0 002-1.6L21 7H6M10 21a1 1 0 100-2 1 1 0 000 2zM18 21a1 1 0 100-2 1 1 0 000 2z"/></svg>
+        <span class="lbl">Cart</span><span id="cc">0</span>
+      </a>
+    </div>
+  </div>
+  <nav id="cn" class="cats" aria-label="Departments"></nav>
+</header>
+
+<main id="app"></main>
+<footer id="ft"></footer>
+<div id="toast" role="status"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
